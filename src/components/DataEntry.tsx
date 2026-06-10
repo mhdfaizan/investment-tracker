@@ -10,19 +10,32 @@ interface DataEntryProps {
   showToast?: (message: string, variant: ToastVariant) => void;
 }
 
+function Field({ label, children, required }: { label: string; children: React.ReactNode; required?: boolean }) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+        {label}{required && <span className="text-red-400 ml-0.5">*</span>}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+function inputClass() {
+  return 'w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder:text-slate-400';
+}
+
 export default function DataEntry({ showToast }: DataEntryProps) {
   const [businesses, setBusinesses] = useState<string[]>([]);
   const [selectedBusiness, setSelectedBusiness] = useState('');
   const [entryType, setEntryType] = useState<EntryType>('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Capital fields
   const [capitalDate, setCapitalDate] = useState('');
   const [investor, setInvestor] = useState('');
   const [capitalAmount, setCapitalAmount] = useState('');
   const [capitalComment, setCapitalComment] = useState('');
 
-  // Monthly fields
   const [monthlyDate, setMonthlyDate] = useState('');
   const [investedAmount, setInvestedAmount] = useState('');
   const [profitAmount, setProfitAmount] = useState('');
@@ -37,7 +50,6 @@ export default function DataEntry({ showToast }: DataEntryProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedBusiness) return;
-
     setSubmitting(true);
 
     try {
@@ -48,22 +60,10 @@ export default function DataEntry({ showToast }: DataEntryProps) {
           setSubmitting(false);
           return;
         }
-
-        const row: string[] = [
-          String(amount),
-          capitalDate,
-          investor,
-          'Capital',
-          capitalComment || '',
-          '',
-          '',
-        ];
+        const row: string[] = [String(amount), capitalDate, investor, 'Capital', capitalComment || '', '', ''];
         await addEntry(selectedBusiness, row);
         showToast?.('Capital entry added successfully!', 'success');
-        setCapitalDate('');
-        setInvestor('');
-        setCapitalAmount('');
-        setCapitalComment('');
+        setCapitalDate(''); setInvestor(''); setCapitalAmount(''); setCapitalComment('');
       } else if (entryType === 'monthly') {
         const invested = parseFloat(investedAmount);
         const profit = parseFloat(profitAmount);
@@ -77,32 +77,10 @@ export default function DataEntry({ showToast }: DataEntryProps) {
           setSubmitting(false);
           return;
         }
-
-        const row: string[] = [
-          '',
-          '',
-          '',
-          '',
-          '',
-          '',
-          '',
-          '',
-          monthlyDate,
-          String(invested),
-          String(profit),
-          forMonth,
-          status,
-          monthlyComment || '',
-        ];
-
+        const row: string[] = ['', '', '', '', '', '', '', '', monthlyDate, String(invested), String(profit), forMonth, status, monthlyComment || ''];
         await addEntry(selectedBusiness, row);
         showToast?.('Monthly entry added successfully!', 'success');
-        setMonthlyDate('');
-        setInvestedAmount('');
-        setProfitAmount('');
-        setForMonth('');
-        setStatus('Reinvested');
-        setMonthlyComment('');
+        setMonthlyDate(''); setInvestedAmount(''); setProfitAmount(''); setForMonth(''); setStatus('Reinvested'); setMonthlyComment('');
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
@@ -112,235 +90,91 @@ export default function DataEntry({ showToast }: DataEntryProps) {
     }
   };
 
-  // Gather all validation errors
   const isValid =
-    selectedBusiness &&
-    entryType &&
+    selectedBusiness && entryType &&
     (entryType === 'capital'
       ? capitalDate && investor && capitalAmount && parseFloat(capitalAmount) > 0
-      : monthlyDate &&
-        forMonth &&
-        investedAmount &&
-        parseFloat(investedAmount) > 0);
+      : monthlyDate && forMonth && investedAmount && parseFloat(investedAmount) > 0);
 
   return (
-    <div className="max-w-2xl px-1 sm:px-0">
-      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">Add Entry</h2>
+    <div className="max-w-xl">
+      <div className="mb-6">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Add Entry</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Record a capital injection or monthly profit</p>
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
-        {/* Business selector */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Business</label>
-          <select
-            value={selectedBusiness}
-            onChange={(e) => setSelectedBusiness(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-            required
-          >
-            <option value="">Select a business...</option>
-            {businesses.map((b) => (
-              <option key={b} value={b}>
-                {b}
-              </option>
-            ))}
-          </select>
-        </div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 space-y-5 transition-colors">
+          <Field label="Business" required>
+            <select value={selectedBusiness} onChange={(e) => setSelectedBusiness(e.target.value)} className={inputClass()} required>
+              <option value="">Select a business...</option>
+              {businesses.map((b) => <option key={b} value={b}>{b}</option>)}
+            </select>
+          </Field>
 
-        {/* Entry type selector */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Entry Type</label>
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="entryType"
-                value="capital"
-                checked={entryType === 'capital'}
-                onChange={() => setEntryType('capital')}
-                className="text-indigo-600 w-4 h-4"
-              />
-              <span className="text-sm text-gray-700 dark:text-slate-300">Capital Injection</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="entryType"
-                value="monthly"
-                checked={entryType === 'monthly'}
-                onChange={() => setEntryType('monthly')}
-                className="text-indigo-600 w-4 h-4"
-              />
-              <span className="text-sm text-gray-700 dark:text-slate-300">Monthly Profit</span>
-            </label>
-          </div>
-        </div>
-
-        {/* Capital form */}
-        {entryType === 'capital' && (
-          <div className="space-y-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg p-4 transition-colors">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Date</label>
-                <input
-                  type="date"
-                  value={capitalDate}
-                  onChange={(e) => setCapitalDate(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                  Investor
+          <Field label="Entry Type" required>
+            <div className="flex gap-4">
+              {(['capital', 'monthly'] as const).map((t) => (
+                <label key={t} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio" name="entryType" value={t}
+                    checked={entryType === t}
+                    onChange={() => setEntryType(t)}
+                    className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-slate-300"
+                  />
+                  <span className="text-sm text-slate-700 dark:text-slate-300">
+                    {t === 'capital' ? 'Capital Injection' : 'Monthly Profit'}
+                  </span>
                 </label>
-                <select
-                  value={investor}
-                  onChange={(e) => setInvestor(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                  required
-                >
-                  <option value="">Select investor...</option>
-                  {INVESTORS.map((name) => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              ))}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                  Amount (PKR)
-                </label>
-                <input
-                  type="number"
-                  placeholder="500000"
-                  min="1"
-                  value={capitalAmount}
-                  onChange={(e) => setCapitalAmount(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                  Comment
-                </label>
-                <input
-                  type="text"
-                  placeholder="Optional note"
-                  value={capitalComment}
-                  onChange={(e) => setCapitalComment(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                />
-              </div>
+          </Field>
+        </div>
+
+        {entryType === 'capital' && (
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 space-y-4 transition-colors">
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Capital Details</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Date" required><input type="date" value={capitalDate} onChange={(e) => setCapitalDate(e.target.value)} className={inputClass()} required /></Field>
+              <Field label="Investor" required>
+                <select value={investor} onChange={(e) => setInvestor(e.target.value)} className={inputClass()} required>
+                  <option value="">Select investor...</option>
+                  {INVESTORS.map((n) => <option key={n} value={n}>{n}</option>)}
+                </select>
+              </Field>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Amount (PKR)" required><input type="number" placeholder="500000" min="1" value={capitalAmount} onChange={(e) => setCapitalAmount(e.target.value)} className={inputClass()} required /></Field>
+              <Field label="Comment"><input type="text" placeholder="Optional note" value={capitalComment} onChange={(e) => setCapitalComment(e.target.value)} className={inputClass()} /></Field>
             </div>
           </div>
         )}
 
-        {/* Monthly profit form */}
         {entryType === 'monthly' && (
-          <div className="space-y-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg p-4 transition-colors">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Date</label>
-                <input
-                  type="date"
-                  value={monthlyDate}
-                  onChange={(e) => setMonthlyDate(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                  For Month
-                </label>
-                <select
-                  value={forMonth}
-                  onChange={(e) => setForMonth(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                  required
-                >
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 space-y-4 transition-colors">
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Monthly Details</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Date" required><input type="date" value={monthlyDate} onChange={(e) => setMonthlyDate(e.target.value)} className={inputClass()} required /></Field>
+              <Field label="For Month" required>
+                <select value={forMonth} onChange={(e) => setForMonth(e.target.value)} className={inputClass()} required>
                   <option value="">Select month...</option>
-                  {[
-                    'January',
-                    'February',
-                    'March',
-                    'April',
-                    'May',
-                    'June',
-                    'July',
-                    'August',
-                    'September',
-                    'October',
-                    'November',
-                    'December',
-                  ].map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
+                  {['January','February','March','April','May','June','July','August','September','October','November','December'].map((m) => <option key={m} value={m}>{m}</option>)}
                 </select>
-              </div>
+              </Field>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                  Invested Amount (PKR)
-                </label>
-                <input
-                  type="number"
-                  placeholder="5000000"
-                  min="1"
-                  value={investedAmount}
-                  onChange={(e) => setInvestedAmount(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                  Profit Amount (PKR)
-                </label>
-                <input
-                  type="number"
-                  placeholder="50000"
-                  value={profitAmount}
-                  onChange={(e) => setProfitAmount(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                  required
-                />
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Invested (PKR)" required><input type="number" placeholder="5000000" min="1" value={investedAmount} onChange={(e) => setInvestedAmount(e.target.value)} className={inputClass()} required /></Field>
+              <Field label="Profit (PKR)" required><input type="number" placeholder="50000" value={profitAmount} onChange={(e) => setProfitAmount(e.target.value)} className={inputClass()} required /></Field>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                  Status
-                </label>
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                >
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Status">
+                <select value={status} onChange={(e) => setStatus(e.target.value)} className={inputClass()}>
                   <option value="Reinvested">Reinvested</option>
                   <option value="Received">Received</option>
                   <option value="Taken Out">Taken Out</option>
                 </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
-                  Comment
-                </label>
-                <input
-                  type="text"
-                  placeholder="Optional note"
-                  value={monthlyComment}
-                  onChange={(e) => setMonthlyComment(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-                />
-              </div>
+              </Field>
+              <Field label="Comment"><input type="text" placeholder="Optional note" value={monthlyComment} onChange={(e) => setMonthlyComment(e.target.value)} className={inputClass()} /></Field>
             </div>
           </div>
         )}
@@ -348,7 +182,7 @@ export default function DataEntry({ showToast }: DataEntryProps) {
         <button
           type="submit"
           disabled={submitting || !isValid}
-          className="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 text-white py-3 px-4 rounded-lg font-medium text-base hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all sticky bottom-20 sm:bottom-4 z-20 shadow-sm"
+          className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
         >
           {submitting ? 'Saving...' : 'Save Entry'}
         </button>

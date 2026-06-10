@@ -14,6 +14,32 @@ interface OverviewProps {
   onBack: () => void;
 }
 
+function Card({ label, value, positive }: { label: string; value: string; positive?: boolean }) {
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 transition-colors">
+      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{label}</p>
+      <p className={`text-xl font-bold ${positive !== undefined ? positive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' : 'text-slate-900 dark:text-white'}`}>
+        {value}
+      </p>
+    </div>
+  );
+}
+
+function Badge({ label, variant }: { label: string; variant: 'blue' | 'emerald' | 'amber' | 'red' | 'slate' }) {
+  const styles = {
+    blue: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+    emerald: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300',
+    amber: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
+    red: 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300',
+    slate: 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300',
+  };
+  return (
+    <span className={`px-2 py-0.5 rounded text-xs font-medium ${styles[variant]}`}>
+      {label}
+    </span>
+  );
+}
+
 export default function Overview({ businessName, onBack }: OverviewProps) {
   const [headers, setHeaders] = useState<string[]>([]);
   const [data, setData] = useState<string[][]>([]);
@@ -35,9 +61,9 @@ export default function Overview({ businessName, onBack }: OverviewProps) {
 
   if (loading) {
     return (
-      <div>
-        <div className="h-6 bg-gray-200 rounded w-32 mb-4 animate-pulse"></div>
-        <div className="h-8 bg-gray-200 rounded w-48 mb-6 animate-pulse"></div>
+      <div className="space-y-6">
+        <div className="h-5 bg-slate-200 dark:bg-slate-700 rounded w-24 animate-pulse" />
+        <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-48 animate-pulse" />
         <SkeletonTable />
       </div>
     );
@@ -48,14 +74,13 @@ export default function Overview({ businessName, onBack }: OverviewProps) {
       <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-700 dark:text-red-400">
         <p className="font-medium">Error loading {businessName}</p>
         <p className="text-sm mt-1">{error}</p>
-        <button onClick={onBack} className="mt-3 text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
+        <button onClick={onBack} className="mt-3 text-sm text-blue-600 dark:text-blue-400 hover:underline">
           &larr; Back
         </button>
       </div>
     );
   }
 
-  // --- Monthly Profits ---
   interface ProfitCol { key: string; label: string; idx: number; fmt: 'text' | 'amount' | 'pct' }
   const profitCols: ProfitCol[] = [];
   const shareNames: string[] = [];
@@ -91,7 +116,6 @@ export default function Overview({ businessName, onBack }: OverviewProps) {
     return sum + (profitCol ? parseAmount(r[profitCol.idx]) : 0);
   }, 0);
 
-  // Per-shareholder totals
   const shareTotals: Record<string, number> = {};
   const sharePctAverages: Record<string, number> = {};
   for (const name of shareNames) {
@@ -107,181 +131,143 @@ export default function Overview({ businessName, onBack }: OverviewProps) {
     }
   }
 
+  const capitalRows = data.filter((row) => row[2] && row[3]);
+  const totalCapital = capitalRows
+    .filter((r) => r[3] === 'Capital')
+    .reduce((s, r) => s + parseAmount(r[0]), 0);
+  const totalTakenOut = capitalRows
+    .filter((r) => r[3] === 'Taken Out')
+    .reduce((s, r) => s + parseAmount(r[0]), 0);
+  const profitReinvested = capitalRows
+    .filter((r) => r[3]?.includes('Profit'))
+    .reduce((s, r) => s + parseAmount(r[0]), 0);
+  const netInvested = totalCapital - totalTakenOut;
+
+  const byInvestor: Record<string, { capital: number; taken: number; profit: number }> = {};
+  for (const r of capitalRows) {
+    const inv = r[2] || 'Unknown';
+    if (!byInvestor[inv]) byInvestor[inv] = { capital: 0, taken: 0, profit: 0 };
+    const amt = parseAmount(r[0]);
+    if (r[3] === 'Capital') byInvestor[inv].capital += amt;
+    else if (r[3] === 'Taken Out') byInvestor[inv].taken += amt;
+    else if (r[3]?.includes('Profit')) byInvestor[inv].profit += amt;
+  }
+
   return (
-    <div>
-      <button
-        onClick={onBack}
-        className="text-indigo-600 dark:text-indigo-400 hover:underline text-sm mb-3 sm:mb-4 inline-block"
-      >
-        &larr; Back to Dashboard
-      </button>
+    <div className="space-y-8">
+      <div className="flex items-center gap-4">
+        <button
+          onClick={onBack}
+          className="p-2 -ml-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:text-slate-300 dark:hover:bg-slate-800 transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white">{businessName}</h2>
+        </div>
+      </div>
 
-      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">
-        {businessName}
-      </h2>
+      {/* Capital Entries */}
+      {capitalRows.length > 0 && (
+        <section className="space-y-4">
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">Capital Overview</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <Card label="Total Capital" value={totalCapital.toLocaleString()} />
+            <Card label="Profit Reinvested" value={profitReinvested.toLocaleString()} positive />
+            <Card label="Taken Out" value={totalTakenOut.toLocaleString()} positive={false} />
+            <Card label="Net Invested" value={netInvested.toLocaleString()} />
+            <Card label="Entries" value={String(capitalRows.length)} />
+          </div>
 
-      {/* --- Capital Entries --- */}
-      {(() => {
-        const capitalRows = data.filter((row) => row[2] && row[3]);
-        const totalCapital = capitalRows
-          .filter((r) => r[3] === 'Capital')
-          .reduce((s, r) => s + parseAmount(r[0]), 0);
-        const totalTakenOut = capitalRows
-          .filter((r) => r[3] === 'Taken Out')
-          .reduce((s, r) => s + parseAmount(r[0]), 0);
-        const profitReinvested = capitalRows
-          .filter((r) => r[3]?.includes('Profit'))
-          .reduce((s, r) => s + parseAmount(r[0]), 0);
-        const netInvested = totalCapital - totalTakenOut;
-
-        const byInvestor: Record<string, { capital: number; taken: number; profit: number }> = {};
-        for (const r of capitalRows) {
-          const inv = r[2] || 'Unknown';
-          if (!byInvestor[inv]) byInvestor[inv] = { capital: 0, taken: 0, profit: 0 };
-          const amt = parseAmount(r[0]);
-          if (r[3] === 'Capital') byInvestor[inv].capital += amt;
-          else if (r[3] === 'Taken Out') byInvestor[inv].taken += amt;
-          else if (r[3]?.includes('Profit')) byInvestor[inv].profit += amt;
-        }
-
-        return (
-          <div className="mb-6 sm:mb-8 space-y-4">
-            {/* Summary cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-              <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-3 transition-colors">
-                <p className="text-xs text-gray-500 dark:text-slate-400 mb-0.5">Total Capital</p>
-                <p className="text-lg font-bold text-indigo-700 dark:text-indigo-400">{totalCapital.toLocaleString()}</p>
-              </div>
-              <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-3 transition-colors">
-                <p className="text-xs text-gray-500 dark:text-slate-400 mb-0.5">Profit Reinvested</p>
-                <p className="text-lg font-bold text-green-700 dark:text-green-400">{profitReinvested.toLocaleString()}</p>
-              </div>
-              <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-3 transition-colors">
-                <p className="text-xs text-gray-500 dark:text-slate-400 mb-0.5">Taken Out</p>
-                <p className="text-lg font-bold text-yellow-700 dark:text-yellow-400">{totalTakenOut.toLocaleString()}</p>
-              </div>
-              <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-3 transition-colors">
-                <p className="text-xs text-gray-500 dark:text-slate-400 mb-0.5">Net Invested</p>
-                <p className="text-lg font-bold text-gray-800 dark:text-white">{netInvested.toLocaleString()}</p>
-              </div>
-              <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-3 transition-colors">
-                <p className="text-xs text-gray-500 dark:text-slate-400 mb-0.5">Entries</p>
-                <p className="text-lg font-bold text-gray-800 dark:text-white">{capitalRows.length}</p>
+          {Object.keys(byInvestor).length > 0 && (
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 transition-colors">
+              <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">By Investor</h4>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {Object.entries(byInvestor).map(([name, vals]) => (
+                  <div key={name} className="bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 p-3 transition-colors">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white mb-2">{name}</p>
+                    <div className="space-y-1 text-xs">
+                      <p className="text-slate-600 dark:text-slate-400">Capital: <span className="font-medium text-slate-900 dark:text-white">{vals.capital.toLocaleString()}</span></p>
+                      {vals.taken > 0 && <p className="text-amber-600 dark:text-amber-400">Taken: {vals.taken.toLocaleString()}</p>}
+                      {vals.profit > 0 && <p className="text-emerald-600 dark:text-emerald-400">Profit: {vals.profit.toLocaleString()}</p>}
+                      <p className="text-slate-400 dark:text-slate-500">Net: <span className="font-medium">{(vals.capital - vals.taken).toLocaleString()}</span></p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
+          )}
 
-            {/* By-investor breakdown */}
-            {Object.keys(byInvestor).length > 0 && (
-              <div className="bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700 rounded-lg p-4 transition-colors">
-                <h4 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">By Investor</h4>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {Object.entries(byInvestor).map(([name, vals]) => (
-                    <div key={name} className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-3 transition-colors">
-                      <p className="text-xs text-gray-500 dark:text-slate-400 mb-1">{name}</p>
-                      <p className="text-sm font-bold text-gray-800 dark:text-white">
-                        Capital: {vals.capital.toLocaleString()}
-                      </p>
-                      {vals.taken > 0 && (
-                        <p className="text-xs text-yellow-600 dark:text-yellow-400">Taken: {vals.taken.toLocaleString()}</p>
-                      )}
-                      {vals.profit > 0 && (
-                        <p className="text-xs text-green-600 dark:text-green-400">Profit: {vals.profit.toLocaleString()}</p>
-                      )}
-                      <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
-                        Net: {(vals.capital - vals.taken).toLocaleString()}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Entries table */}
-            <div>
-              <h3 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-white mb-2 sm:mb-3">
-                All Entries
-              </h3>
-              <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-                <table className="min-w-full text-xs sm:text-sm">
-                  <thead>
-                    <tr className="bg-gray-50 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700">
-                      <th className="text-left px-2 sm:px-3 py-2 font-medium text-gray-600 dark:text-slate-300">Amount</th>
-                      <th className="text-left px-2 sm:px-3 py-2 font-medium text-gray-600 dark:text-slate-300">Date</th>
-                      <th className="text-left px-2 sm:px-3 py-2 font-medium text-gray-600 dark:text-slate-300">Investor</th>
-                      <th className="text-left px-2 sm:px-3 py-2 font-medium text-gray-600 dark:text-slate-300">Type</th>
-                      <th className="text-left px-2 sm:px-3 py-2 font-medium text-gray-600 dark:text-slate-300">Comment</th>
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors">
+            <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700">
+              <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">All Entries</h4>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-slate-800/50">
+                    <th className="text-left px-5 py-3 font-medium text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">Amount</th>
+                    <th className="text-left px-5 py-3 font-medium text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                    <th className="text-left px-5 py-3 font-medium text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">Investor</th>
+                    <th className="text-left px-5 py-3 font-medium text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">Type</th>
+                    <th className="text-left px-5 py-3 font-medium text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">Comment</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {capitalRows.map((row, i) => (
+                    <tr key={i} className="border-t border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                      <td className="px-5 py-3 text-slate-900 dark:text-white font-medium tabular-nums">
+                        {parseAmount(row[0]) ? parseAmount(row[0]).toLocaleString() : ''}
+                      </td>
+                      <td className="px-5 py-3 text-slate-600 dark:text-slate-400">{row[1] || ''}</td>
+                      <td className="px-5 py-3 text-slate-900 dark:text-white">{row[2] || ''}</td>
+                      <td className="px-5 py-3">
+                        {row[3] === 'Capital' ? <Badge label="Capital" variant="blue" /> :
+                         row[3] === 'Taken Out' ? <Badge label="Taken Out" variant="amber" /> :
+                         row[3]?.includes('Profit') ? <Badge label="Profit" variant="emerald" /> :
+                         <Badge label={row[3] || ''} variant="slate" />}
+                      </td>
+                      <td className="px-5 py-3 text-slate-400 dark:text-slate-500 max-w-[150px] truncate">
+                        {row[4] || ''}
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {capitalRows.map((row, i) => (
-                      <tr key={i} className="border-b border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
-                        <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-gray-900 dark:text-white">{parseAmount(row[0]) ? parseAmount(row[0]).toLocaleString() : ''}</td>
-                        <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-gray-900 dark:text-white">{row[1] || ''}</td>
-                        <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-gray-900 dark:text-white">{row[2] || ''}</td>
-                        <td className="px-2 sm:px-3 py-2 sm:py-2.5">
-                          <span className={`px-1.5 sm:px-2 py-0.5 rounded text-xs font-medium ${
-                            row[3] === 'Capital' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
-                            row[3] === 'Taken Out' ? 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
-                            row[3]?.includes('Profit') ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
-                            'bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300'
-                          }`}>{row[3] || ''}</span>
-                        </td>
-                        <td className="px-2 sm:px-3 py-2 sm:py-2.5 text-gray-500 dark:text-slate-400 max-w-[150px] truncate">
-                          {row[4] || ''}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
-        );
-      })()}
+        </section>
+      )}
 
       {/* Monthly Profits */}
       {profitRows.length > 0 && (
-        <div className="space-y-6">
-          {/* Summary cards */}
+        <section className="space-y-4">
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">Monthly Profits</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-3 transition-colors">
-              <p className="text-xs text-gray-500 dark:text-slate-400 mb-0.5">Total Profit</p>
-              <p className="text-lg font-bold text-green-700 dark:text-green-400">{totalProfit.toLocaleString()}</p>
-            </div>
-            <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-3 transition-colors">
-              <p className="text-xs text-gray-500 dark:text-slate-400 mb-0.5">Avg Monthly</p>
-              <p className="text-lg font-bold text-gray-800 dark:text-white">
-                {Math.round(totalProfit / profitRows.length).toLocaleString()}
-              </p>
-            </div>
-            <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-3 transition-colors">
-              <p className="text-xs text-gray-500 dark:text-slate-400 mb-0.5">Best Month</p>
-              <p className="text-lg font-bold text-green-700 dark:text-green-400">
-                {Math.max(...profitRows.map((r) => {
-                  const col = profitCols.find((c) => c.key === 'profit');
-                  return col ? parseAmount(r[col.idx]) : 0;
-                })).toLocaleString()}
-              </p>
-            </div>
-            <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg p-3 transition-colors">
-              <p className="text-xs text-gray-500 dark:text-slate-400 mb-0.5">Months Tracked</p>
-              <p className="text-lg font-bold text-gray-800 dark:text-white">{profitRows.length}</p>
-            </div>
+            <Card label="Total Profit" value={totalProfit.toLocaleString()} positive={totalProfit >= 0} />
+            <Card label="Avg Monthly" value={Math.round(totalProfit / profitRows.length).toLocaleString()} />
+            <Card label="Best Month" value={Math.max(...profitRows.map((r) => {
+              const col = profitCols.find((c) => c.key === 'profit');
+              return col ? parseAmount(r[col.idx]) : 0;
+            })).toLocaleString()} positive />
+            <Card label="Months Tracked" value={String(profitRows.length)} />
           </div>
 
-          <div>
-            <h3 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-white mb-2 sm:mb-3">
-              Monthly Profits
-            </h3>
-            <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-              <table className="min-w-full text-xs sm:text-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden transition-colors">
+            <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700">
+              <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Monthly Breakdown</h4>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
                 <thead>
-                  <tr className="bg-gray-50 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700">
-                    <th className="text-left px-2 sm:px-3 py-2 font-medium text-gray-600 dark:text-slate-300 whitespace-nowrap">
+                  <tr className="bg-slate-50 dark:bg-slate-800/50">
+                    <th className="text-left px-5 py-3 font-medium text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">
                       {headers[9] || 'Date'}
                     </th>
                     {profitCols.map((c) => (
-                      <th key={c.key} className="text-left px-2 sm:px-3 py-2 font-medium text-gray-600 dark:text-slate-300 whitespace-nowrap">
+                      <th key={c.key} className="text-left px-5 py-3 font-medium text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap">
                         {c.label}
                       </th>
                     ))}
@@ -289,44 +275,40 @@ export default function Overview({ businessName, onBack }: OverviewProps) {
                 </thead>
                 <tbody>
                   {profitRows.map((row, i) => (
-                    <tr key={i} className="border-b border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
-                      <td className="px-2 sm:px-3 py-2 sm:py-2.5 whitespace-nowrap text-gray-900 dark:text-white">{row[9] || ''}</td>
+                    <tr key={i} className="border-t border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
+                      <td className="px-5 py-3 whitespace-nowrap text-slate-900 dark:text-white">{row[9] || ''}</td>
                       {profitCols.map((c) => {
                         const val = row[c.idx] || '';
                         if (c.fmt === 'amount') {
                           const num = parseAmount(val);
                           return (
-                            <td key={c.key} className="px-2 sm:px-3 py-2 sm:py-2.5 text-right font-medium tabular-nums text-gray-900 dark:text-white">
+                            <td key={c.key} className="px-5 py-3 text-right font-medium tabular-nums text-slate-900 dark:text-white">
                               {num ? num.toLocaleString() : ''}
                             </td>
                           );
                         }
                         if (c.key === 'status') {
                           return (
-                            <td key={c.key} className="px-2 sm:px-3 py-2 sm:py-2.5">
-                              <span className={`px-1.5 sm:px-2 py-0.5 rounded text-xs font-medium ${
-                                val === 'Reinvested' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
-                                val === 'Received' ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
-                                val === 'Taken Out' ? 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300' :
-                                val === 'Skipped' ? 'bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-slate-400' :
-                                'bg-gray-50 dark:bg-slate-700 text-gray-600 dark:text-slate-300'
-                              }`}>{val}</span>
+                            <td key={c.key} className="px-5 py-3">
+                              {val === 'Reinvested' ? <Badge label="Reinvested" variant="blue" /> :
+                               val === 'Received' ? <Badge label="Received" variant="emerald" /> :
+                               val === 'Taken Out' ? <Badge label="Taken Out" variant="amber" /> :
+                               val === 'Skipped' ? <Badge label="Skipped" variant="slate" /> :
+                               <Badge label={val} variant="slate" />}
                             </td>
                           );
                         }
                         if (c.key === 'pl') {
                           return (
-                            <td key={c.key} className="px-2 sm:px-3 py-2 sm:py-2.5">
-                              <span className={`px-1.5 sm:px-2 py-0.5 rounded text-xs font-medium ${
-                                val === 'Profit' ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
-                                val === 'Loss' ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300' :
-                                'bg-gray-50 dark:bg-slate-700 text-gray-600 dark:text-slate-300'
-                              }`}>{val}</span>
+                            <td key={c.key} className="px-5 py-3">
+                              {val === 'Profit' ? <Badge label="Profit" variant="emerald" /> :
+                               val === 'Loss' ? <Badge label="Loss" variant="red" /> :
+                               <Badge label={val} variant="slate" />}
                             </td>
                           );
                         }
                         return (
-                          <td key={c.key} className="px-2 sm:px-3 py-2 sm:py-2.5 text-gray-500 dark:text-slate-400 max-w-[120px] truncate">
+                          <td key={c.key} className="px-5 py-3 text-slate-500 dark:text-slate-400 max-w-[120px] truncate">
                             {val}
                           </td>
                         );
@@ -338,10 +320,9 @@ export default function Overview({ businessName, onBack }: OverviewProps) {
             </div>
           </div>
 
-          {/* Shareholder Summary */}
           {shareNames.length > 0 && (
-            <div className="bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-slate-700 rounded-lg p-4 transition-colors">
-              <h4 className="text-sm font-semibold text-gray-700 dark:text-slate-300 mb-3">Profit Share Distribution</h4>
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-5 transition-colors">
+              <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Profit Share Distribution</h4>
               <div className="flex flex-wrap items-start gap-6">
                 <DonutChart
                   segments={shareNames.map((name) => ({
@@ -349,15 +330,15 @@ export default function Overview({ businessName, onBack }: OverviewProps) {
                     value: shareTotals[name],
                   }))}
                 />
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 min-w-0 flex-1">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 min-w-0 flex-1">
                   {shareNames.map((name) => (
-                    <div key={name} className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-3 transition-colors">
-                      <p className="text-xs text-gray-500 dark:text-slate-400 mb-1">{name}</p>
-                      <p className="text-lg font-bold text-gray-800 dark:text-white">
+                    <div key={name} className="bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 p-3 transition-colors">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">{name}</p>
+                      <p className="text-lg font-bold text-slate-900 dark:text-white">
                         {shareTotals[name].toLocaleString()}
                       </p>
                       {sharePctAverages[name] > 0 && (
-                        <p className="text-xs text-gray-400 dark:text-slate-500 mt-0.5">
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
                           Avg share: {sharePctAverages[name].toFixed(1)}%
                         </p>
                       )}
@@ -367,7 +348,7 @@ export default function Overview({ businessName, onBack }: OverviewProps) {
               </div>
             </div>
           )}
-        </div>
+        </section>
       )}
     </div>
   );
