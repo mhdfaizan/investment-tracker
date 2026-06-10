@@ -125,16 +125,16 @@ export default function DataEntry({ showToast }: DataEntryProps) {
 
   return (
     <div className="max-w-2xl px-1 sm:px-0">
-      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Add Entry</h2>
+      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-4 sm:mb-6">Add Entry</h2>
 
       <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
         {/* Business selector */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Business</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Business</label>
           <select
             value={selectedBusiness}
             onChange={(e) => setSelectedBusiness(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
             required
           >
             <option value="">Select a business...</option>
@@ -148,7 +148,7 @@ export default function DataEntry({ showToast }: DataEntryProps) {
 
         {/* Entry type selector */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Entry Type</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Entry Type</label>
           <div className="flex gap-4">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -159,7 +159,7 @@ export default function DataEntry({ showToast }: DataEntryProps) {
                 onChange={() => setEntryType('capital')}
                 className="text-indigo-600 w-4 h-4"
               />
-              <span className="text-sm text-gray-700">Capital Injection</span>
+              <span className="text-sm text-gray-700 dark:text-slate-300">Capital Injection</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -170,33 +170,33 @@ export default function DataEntry({ showToast }: DataEntryProps) {
                 onChange={() => setEntryType('monthly')}
                 className="text-indigo-600 w-4 h-4"
               />
-              <span className="text-sm text-gray-700">Monthly Profit</span>
+              <span className="text-sm text-gray-700 dark:text-slate-300">Monthly Profit</span>
             </label>
           </div>
         </div>
 
         {/* Capital form */}
         {entryType === 'capital' && (
-          <div className="space-y-4 bg-gray-50 rounded-lg p-4">
+          <div className="space-y-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg p-4 transition-colors">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Date</label>
                 <input
                   type="date"
                   value={capitalDate}
                   onChange={(e) => setCapitalDate(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                   Investor
                 </label>
                 <select
                   value={investor}
                   onChange={(e) => setInvestor(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                   required
                 >
                   <option value="">Select investor...</option>
@@ -210,7 +210,7 @@ export default function DataEntry({ showToast }: DataEntryProps) {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                   Amount (PKR)
                 </label>
                 <input
@@ -219,12 +219,12 @@ export default function DataEntry({ showToast }: DataEntryProps) {
                   min="1"
                   value={capitalAmount}
                   onChange={(e) => setCapitalAmount(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                   Comment
                 </label>
                 <input
@@ -232,7 +232,7 @@ export default function DataEntry({ showToast }: DataEntryProps) {
                   placeholder="Optional note"
                   value={capitalComment}
                   onChange={(e) => setCapitalComment(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                 />
               </div>
             </div>
@@ -241,26 +241,26 @@ export default function DataEntry({ showToast }: DataEntryProps) {
 
         {/* Monthly profit form */}
         {entryType === 'monthly' && (
-          <div className="space-y-4 bg-gray-50 rounded-lg p-4">
+          <div className="space-y-4 bg-gray-50 dark:bg-slate-800/50 rounded-lg p-4 transition-colors">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Date</label>
                 <input
                   type="date"
                   value={monthlyDate}
                   onChange={(e) => setMonthlyDate(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                   For Month
                 </label>
                 <select
                   value={forMonth}
                   onChange={(e) => setForMonth(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                   required
                 >
                   <option value="">Select month...</option>
@@ -287,7 +287,7 @@ export default function DataEntry({ showToast }: DataEntryProps) {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                   Invested Amount (PKR)
                 </label>
                 <input
@@ -296,12 +296,12 @@ export default function DataEntry({ showToast }: DataEntryProps) {
                   min="1"
                   value={investedAmount}
                   onChange={(e) => setInvestedAmount(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                   Profit Amount (PKR)
                 </label>
                 <input
@@ -309,20 +309,20 @@ export default function DataEntry({ showToast }: DataEntryProps) {
                   placeholder="50000"
                   value={profitAmount}
                   onChange={(e) => setProfitAmount(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                   required
                 />
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                   Status
                 </label>
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                 >
                   <option value="Reinvested">Reinvested</option>
                   <option value="Received">Received</option>
@@ -330,7 +330,7 @@ export default function DataEntry({ showToast }: DataEntryProps) {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                   Comment
                 </label>
                 <input
@@ -338,7 +338,7 @@ export default function DataEntry({ showToast }: DataEntryProps) {
                   placeholder="Optional note"
                   value={monthlyComment}
                   onChange={(e) => setMonthlyComment(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
                 />
               </div>
             </div>
@@ -348,7 +348,7 @@ export default function DataEntry({ showToast }: DataEntryProps) {
         <button
           type="submit"
           disabled={submitting || !isValid}
-          className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-medium text-base hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors sticky bottom-20 sm:bottom-4 z-20"
+          className="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 text-white py-3 px-4 rounded-lg font-medium text-base hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all sticky bottom-20 sm:bottom-4 z-20 shadow-sm"
         >
           {submitting ? 'Saving...' : 'Save Entry'}
         </button>

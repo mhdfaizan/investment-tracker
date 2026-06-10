@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { getDashboard } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import type { BusinessSummary } from '../types';
 import { SkeletonDashboard } from './Skeletons';
+import DonutChart from './DonutChart';
 import { usePageTitle } from '../hooks/usePageTitle';
 
 function formatCurrency(value: number): string {
@@ -25,46 +27,41 @@ function BusinessCard({
   return (
     <button
       onClick={() => onSelect(business.name)}
-      className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 sm:p-6 hover:shadow-md transition-shadow text-left w-full cursor-pointer"
+      className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-5 sm:p-6 hover:shadow-md dark:hover:shadow-slate-700/30 transition-all text-left w-full cursor-pointer"
     >
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">{business.name}</h3>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{business.name}</h3>
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4">
         <div>
-          <p className="text-xs sm:text-sm text-gray-500">Total Investment</p>
-          <p className="text-lg sm:text-xl font-bold text-gray-900">
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">Total Investment</p>
+          <p className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
             {formatCurrency(business.totalInvestment)}
           </p>
         </div>
         <div>
-          <p className="text-xs sm:text-sm text-gray-500">Total Profit</p>
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400">Total Profit</p>
           <p
-            className={`text-lg sm:text-xl font-bold ${isProfit ? 'text-green-600' : 'text-red-600'}`}
+            className={`text-lg sm:text-xl font-bold ${isProfit ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
           >
             {formatCurrency(business.totalProfit)}
           </p>
         </div>
       </div>
 
-      <div className="border-t border-gray-100 pt-3">
-        <p className="text-xs sm:text-sm text-gray-500 mb-2">Investor Shares</p>
-        <div className="flex flex-wrap gap-1.5 sm:gap-2">
-          {Object.entries(business.investorShares).map(([investor, share]) => (
-            <span
-              key={investor}
-              className="inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-indigo-50 text-indigo-700"
-            >
-              {investor}: {(share * 100).toFixed(1)}%
-            </span>
-          ))}
-          {Object.keys(business.investorShares).length === 0 && (
-            <span className="text-xs sm:text-sm text-gray-400">No share data</span>
-          )}
+      {Object.keys(business.investorShares).length > 0 && (
+        <div className="border-t border-gray-100 dark:border-slate-700 pt-3">
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-slate-400 mb-2">Investor Shares</p>
+          <DonutChart
+            segments={Object.entries(business.investorShares).map(([investor, share]) => ({
+              label: investor,
+              value: share,
+            }))}
+          />
         </div>
-      </div>
+      )}
 
       {business.lastMonth && (
-        <p className="text-xs text-gray-400 mt-3">Last entry: {business.lastMonth}</p>
+        <p className="text-xs text-gray-400 dark:text-slate-500 mt-3">Last entry: {business.lastMonth}</p>
       )}
     </button>
   );
@@ -75,6 +72,7 @@ export default function Dashboard({
 }: {
   onSelectBusiness: (name: string) => void;
 }) {
+  const { user } = useAuth();
   const [businesses, setBusinesses] = useState<BusinessSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -83,16 +81,20 @@ export default function Dashboard({
 
   useEffect(() => {
     getDashboard()
-      .then((data) => setBusinesses(data.businesses))
+      .then((data) => {
+        const allowed = user?.allowedBusinesses;
+        const filtered = allowed ? data.businesses.filter((b) => allowed.includes(b.name)) : data.businesses;
+        setBusinesses(filtered);
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [user]);
 
   if (loading) return <SkeletonDashboard />;
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-700 dark:text-red-400">
         <p className="font-medium">Error loading dashboard</p>
         <p className="text-sm mt-1">{error}</p>
       </div>
@@ -104,18 +106,24 @@ export default function Dashboard({
 
   return (
     <div>
-      <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Dashboard</h2>
+      <div className="flex items-center justify-between mb-4 sm:mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h2>
+      </div>
 
       {/* Grand totals */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
-        <div className="bg-indigo-600 rounded-xl p-4 sm:p-5 text-white">
+        <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-xl p-4 sm:p-5 text-white shadow-sm">
           <p className="text-indigo-200 text-xs sm:text-sm">Total Invested (All Businesses)</p>
           <p className="text-xl sm:text-2xl font-bold mt-1">
             {formatCurrency(grandTotalInvestment)}
           </p>
         </div>
         <div
-          className={`rounded-xl p-4 sm:p-5 text-white ${grandTotalProfit >= 0 ? 'bg-green-600' : 'bg-red-600'}`}
+          className={`rounded-xl p-4 sm:p-5 text-white shadow-sm ${
+            grandTotalProfit >= 0
+              ? 'bg-gradient-to-br from-green-600 to-green-700'
+              : 'bg-gradient-to-br from-red-600 to-red-700'
+          }`}
         >
           <p
             className={`text-xs sm:text-sm ${grandTotalProfit >= 0 ? 'text-green-200' : 'text-red-200'}`}
@@ -136,7 +144,7 @@ export default function Dashboard({
       </div>
 
       {businesses.length === 0 && (
-        <p className="text-gray-500 text-center py-12">
+        <p className="text-gray-500 dark:text-slate-400 text-center py-12">
           No businesses found. Make sure your Google Sheet has data.
         </p>
       )}

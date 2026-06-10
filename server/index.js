@@ -14,6 +14,38 @@ const corsOptions =
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// --- Simple Auth ---
+const tokens = new Map();
+const USERS = {
+  Apple: { password: 'admin123', allowedBusinesses: ['Transport - Ami'] },
+  OrangeEater123: { password: 'admin321', allowedBusinesses: null },
+};
+
+app.post('/api/auth/login', (req, res) => {
+  const { username, password } = req.body || {};
+  const user = USERS[username];
+  if (!user || user.password !== password) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+  const token = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  tokens.set(token, { username, allowedBusinesses: user.allowedBusinesses });
+  res.json({ token, username, allowedBusinesses: user.allowedBusinesses });
+});
+
+app.get('/api/auth/me', (req, res) => {
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith('Bearer ')) return res.status(401).json({ error: 'No token' });
+  const session = tokens.get(auth.slice(7));
+  if (!session) return res.status(401).json({ error: 'Invalid token' });
+  res.json({ username: session.username, allowedBusinesses: session.allowedBusinesses });
+});
+
+function getUserFromReq(req) {
+  const auth = req.headers.authorization;
+  if (!auth || !auth.startsWith('Bearer ')) return null;
+  return tokens.get(auth.slice(7)) || null;
+}
+
 // --- API Routes ---
 
 // Health check
