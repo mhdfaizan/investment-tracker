@@ -18,7 +18,7 @@ app.use(express.json());
 const tokens = new Map();
 const USERS = {
   Apple: { password: 'admin123', allowedBusinesses: ['Transport - Ami'] },
-  OrangeEater123: { password: 'admin321', allowedBusinesses: null },
+  OrangeEater123: { password: 'admin321@', allowedBusinesses: null },
 };
 
 app.post('/api/auth/login', (req, res) => {
