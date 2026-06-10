@@ -2,7 +2,7 @@ services:
   - type: web
     name: investment-tracker
     env: node
-    buildCommand: npm install --include=dev && npm run build
+    buildCommand: NODE_ENV=development npm install && npm run build
     startCommand: npm start
     plan: free
     envVars:
